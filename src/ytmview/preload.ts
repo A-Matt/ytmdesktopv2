@@ -150,18 +150,16 @@ window.addEventListener('load', async () => {
     if (continueWhereYouLeftOff) {
         // The last page the user was on is already a page where it will be playing a song from (no point telling YTM to play it again)
         if (!state.lastUrl.startsWith("https://music.youtube.com/watch")) {
-            await webFrame.executeJavaScript(`
-                document.dispatchEvent(new CustomEvent('yt-navigate', {
-                    detail: {
-                        endpoint: {
-                            watchEndpoint: {
-                                videoId: "${state.lastVideoId}",
-                                playlistId: ${state.lastPlaylistId ? `"${state.lastPlaylistId}"` : null}
-                            }
+            document.dispatchEvent(new CustomEvent('yt-navigate', {
+                detail: {
+                    endpoint: {
+                        watchEndpoint: {
+                            videoId: state.lastVideoId,
+                            playlistId: state.lastPlaylistId
                         }
                     }
-                }));
-            `);
+                }
+            }));
         }
     }
 
