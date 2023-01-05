@@ -1,4 +1,8 @@
 import { contextBridge, ipcRenderer, webFrame } from "electron";
+import Store from "../shared/store/renderer";
+import { StoreSchema } from "../shared/store/schema";
+
+const store = new Store<StoreSchema>();
 
 contextBridge.exposeInMainWorld('ytmd', {
     sendVideoProgress: (volume: number) => ipcRenderer.send('ytmView:videoProgressChanged', volume),
@@ -139,6 +143,27 @@ window.addEventListener('load', async () => {
     createNavigationMenuArrows();
     hideChromecastButton();
     hookPlayerApiEvents();
+
+    const state = await store.get('state');
+    const continueWhereYouLeftOff = (await store.get('playback')).continueWhereYouLeftOff;
+
+    if (continueWhereYouLeftOff) {
+        // The last page the user was on is already a page where it will be playing a song from (no point telling YTM to play it again)
+        if (!state.lastUrl.startsWith("https://music.youtube.com/watch")) {
+            await webFrame.executeJavaScript(`
+                document.dispatchEvent(new CustomEvent('yt-navigate', {
+                    detail: {
+                        endpoint: {
+                            watchEndpoint: {
+                                videoId: "${state.lastVideoId}",
+                                playlistId: ${state.lastPlaylistId ? `"${state.lastPlaylistId}"` : null}
+                            }
+                        }
+                    }
+                }));
+            `);
+        }
+    }
 
     ipcRenderer.on('shortcut:triggered', async (event, shortcut) => {
         if (shortcut === 'playPause') {

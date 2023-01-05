@@ -19,5 +19,7 @@ export type StoreSchema = {
     }
     state: {
         lastUrl: string,
+        lastVideoId: string,
+        lastPlaylistId: string
     }
 }

@@ -38,7 +38,9 @@ const store = new ElectronStore<StoreSchema>({
       volumeDown: ''
     },
     state: {
-      lastUrl: 'https://music.youtube.com/'
+      lastUrl: 'https://music.youtube.com/',
+      lastVideoId: '',
+      lastPlaylistId: ''
     }
   }
 });
@@ -51,11 +53,10 @@ store.onDidAnyChange((newState, oldState) => {
     ytmView.webContents.send('settings:stateChanged', newState, oldState);
   }
 
-  if (store.get('general').startOnBoot) {
-    app.setLoginItemSettings({
-      openAtLogin: true
-    });
-  }
+  app.setLoginItemSettings({
+    openAtLogin: store.get('general').startOnBoot
+  });
+
   registerShortcuts();
 })
 
