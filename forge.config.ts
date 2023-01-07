@@ -37,6 +37,14 @@ const config: ForgeConfig = {
             },
           },
           {
+            html: './src/windows/authorize-companion/index.html',
+            js: './src/windows/authorize-companion/renderer.ts',
+            name: 'authorize_companion_window',
+            preload: {
+              js: './src/windows/authorize-companion/preload.ts',
+            },
+          },
+          {
             name: 'ytm_view',
             preload: {
               js: './src/ytmview/preload.ts',

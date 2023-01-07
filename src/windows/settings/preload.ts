@@ -13,6 +13,10 @@ contextBridge.exposeInMainWorld('ytmd', {
         get: async (key: keyof StoreSchema) => await store.get(key),
         onDidAnyChange: (callback: (newState: StoreSchema, oldState: StoreSchema) => void) => store.onDidAnyChange(callback)
     },
+    safeStorage: {
+        decryptString: async (value: string) => await ipcRenderer.invoke('safeStorage:decryptString', value),
+        encryptString: async (value: string) => await ipcRenderer.invoke('safeStorage:encryptString', value),
+    },
     minimizeWindow: () => ipcRenderer.send("settingsWindow:minimize"),
     maximizeWindow: () => ipcRenderer.send("settingsWindow:maximize"),
     restoreWindow: () => ipcRenderer.send("settingsWindow:restore"),

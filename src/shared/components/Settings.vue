@@ -3,11 +3,14 @@ import { ref } from 'vue';
 import KeybindInput from '../../shared/components/KeybindInput.vue'
 import { StoreSchema } from '../store/schema';
 
-const currentTab = ref(4);
+const currentTab = ref(3);
 
 const store = window.ytmd.store;
+const safeStorage = window.ytmd.safeStorage;
+
 const general: StoreSchema['general'] = await store.get('general');
 const playback: StoreSchema['playback'] = await store.get('playback');
+const integrations: StoreSchema['integrations'] = await store.get('integrations');
 const shortcuts: StoreSchema['shortcuts'] = await store.get('shortcuts');
 
 const hideToTrayOnClose = ref<boolean>(general.hideToTrayOnClose);
@@ -17,6 +20,9 @@ const startMinimized = ref<boolean>(general.startMinimized);
 
 const continueWhereYouLeftOff = ref<boolean>(playback.continueWhereYouLeftOff);
 
+const companionServerEnabled = ref<boolean>(integrations.companionServerEnabled);
+const companionServerAuthWindowEnabled = ref<boolean>(await safeStorage.decryptString(integrations.companionServerAuthWindowEnabled) === 'true' ? true : false);
+
 const shortcutPlayPause = ref<string>(shortcuts.playPause);
 const shortcutNext = ref<string>(shortcuts.next);
 const shortcutPrevious = ref<string>(shortcuts.previous);
@@ -25,21 +31,36 @@ const shortcutThumbsDown = ref<string>(shortcuts.thumbsDown);
 const shortcutVolumeUp = ref<string>(shortcuts.volumeUp);
 const shortcutVolumeDown = ref<string>(shortcuts.volumeDown);
 
-store.onDidAnyChange((newState, oldState) => {
+store.onDidAnyChange(async (newState, oldState) => {
     hideToTrayOnClose.value = newState.general.hideToTrayOnClose;
     showNotificationOnSongChange.value = newState.general.showNotificationOnSongChange;
     startOnBoot.value = newState.general.startOnBoot;
     startMinimized.value = newState.general.startMinimized;
+
     continueWhereYouLeftOff.value = newState.playback.continueWhereYouLeftOff;
+
+    companionServerEnabled.value = newState.integrations.companionServerEnabled;
+    companionServerAuthWindowEnabled.value = await safeStorage.decryptString(newState.integrations.companionServerAuthWindowEnabled) === 'true' ? true : false
+
+    shortcutPlayPause.value = newState.shortcuts.playPause;
+    shortcutNext.value = newState.shortcuts.next;
+    shortcutPrevious.value = newState.shortcuts.previous;
+    shortcutThumbsUp.value = newState.shortcuts.thumbsUp;
+    shortcutThumbsDown.value = newState.shortcuts.thumbsDown;
+    shortcutVolumeUp.value = newState.shortcuts.volumeUp;
+    shortcutVolumeDown.value = newState.shortcuts.volumeDown;
 });
 
-function settingsChanged() {
+async function settingsChanged() {
     store.set('general.hideToTrayOnClose', hideToTrayOnClose.value);
     store.set('general.showNotificationOnSongChange', showNotificationOnSongChange.value);
     store.set('general.startOnBoot', startOnBoot.value);
     store.set('general.startMinimized', startMinimized.value);
 
     store.set('playback.continueWhereYouLeftOff', continueWhereYouLeftOff.value);
+
+    store.set('integrations.companionServerEnabled', companionServerEnabled.value);
+    store.set('integrations.companionServerAuthWindowEnabled', await safeStorage.encryptString(companionServerAuthWindowEnabled.value.toString()));
 
     store.set('shortcuts.playPause', shortcutPlayPause.value);
     store.set('shortcuts.next', shortcutNext.value);
@@ -62,8 +83,8 @@ function changeTab(newTab: number) {
                     class="material-symbols-outlined">settings_applications</span>General</li>
             <li :class="{ active: currentTab === 2 }" @click="changeTab(2)"><span
                     class="material-symbols-outlined">music_note</span>Playback</li>
-            <!--<li :class="{ active: currentTab === 3 }" @click="changeTab(3)"><span
-                    class="material-symbols-outlined">wifi_tethering</span>Integrations</li>-->
+            <li :class="{ active: currentTab === 3 }" @click="changeTab(3)"><span
+                    class="material-symbols-outlined">wifi_tethering</span>Integrations</li>
             <li :class="{ active: currentTab === 4 }" @click="changeTab(4)"><span
                     class="material-symbols-outlined">keyboard</span>Shortcuts</li>
         </ul>
@@ -97,7 +118,21 @@ function changeTab(newTab: number) {
                     <input class="toggle" type="checkbox" />
                 </div>-->
             </div>
-            <div v-if="currentTab === 3" class="integrations-tab"></div>
+            <div v-if="currentTab === 3" class="integrations-tab">
+                <div class="setting">
+                    <p>Companion server</p>
+                    <input v-model="companionServerEnabled" @change="settingsChanged" class="toggle" type="checkbox" />
+                </div>
+                <div v-if="companionServerEnabled" class="setting indented">
+                    <div class="name-with-description">
+                        <p class="name">Enable companion authorization</p>
+                        <p class="description">Automatically disables after the first successful authorization or 5
+                            minutes has passed</p>
+                    </div>
+                    <input v-model="companionServerAuthWindowEnabled" @change="settingsChanged" class="toggle"
+                        type="checkbox" />
+                </div>
+            </div>
             <div v-if="currentTab === 4" class="shortcuts-tab">
                 <div class="setting">
                     <p>Play/Pause</p>
@@ -114,7 +149,7 @@ function changeTab(newTab: number) {
                 <!--<div class="setting">
                     <p>Thumbs Up</p>
                     <KeybindInput v-model="shortcutThumbsUp" @change="settingsChanged" />
-                </div>
+                </div> 
                 <div class="setting">
                     <p>Thumbs Down</p>
                     <KeybindInput v-model="shortcutThumbsDown" @change="settingsChanged" />
@@ -146,6 +181,7 @@ function changeTab(newTab: number) {
 
 .sidebar {
     width: 25%;
+    min-width: 25%;
     list-style-type: none;
     margin: unset;
     padding: unset;
@@ -189,10 +225,27 @@ function changeTab(newTab: number) {
     justify-content: space-between;
 }
 
+.setting.indented {
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1px solid #212121;
+}
+
+.name-with-description .name {
+    margin-bottom: unset;
+}
+
+.name-with-description .description {
+    margin-top: 4px;
+    color: #969696;
+}
+
 .toggle {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+    min-width: 62px;
+    min-height: 32px;
     width: 62px;
     height: 32px;
     display: inline-block;

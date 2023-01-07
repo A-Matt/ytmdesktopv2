@@ -8,6 +8,11 @@ export type StoreSchema = {
     playback: {
         continueWhereYouLeftOff: boolean
     },
+    integrations: {
+        companionServerEnabled: boolean,
+        companionServerAuthWindowEnabled: string | null // boolean | Encrypted for security
+        companionServerAuthTokens: string | null // array[object] | Encrypted for security
+    },
     shortcuts: {
         playPause: string,
         next: string,
@@ -20,6 +25,7 @@ export type StoreSchema = {
     state: {
         lastUrl: string,
         lastVideoId: string,
-        lastPlaylistId: string
+        lastPlaylistId: string,
+        companionServerAuthWindowEnableTime: string | null // string (ISO8601) | Encrypted for security
     }
 }

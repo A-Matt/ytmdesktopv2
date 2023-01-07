@@ -8,7 +8,8 @@ contextBridge.exposeInMainWorld('ytmd', {
     sendVideoProgress: (volume: number) => ipcRenderer.send('ytmView:videoProgressChanged', volume),
     sendVideoState: (state: number) => ipcRenderer.send('ytmView:videoStateChanged', state),
     sendVideoData: (videoDetails: any, playlistId: string) => ipcRenderer.send('ytmView:videoDataChanged', videoDetails, playlistId),
-    sendAdState: (adRunning: boolean) => ipcRenderer.send('ytmView:adStateChanged', adRunning)
+    sendAdState: (adRunning: boolean) => ipcRenderer.send('ytmView:adStateChanged', adRunning),
+    sendStoreUpdate: (queueState: any) => ipcRenderer.send('ytmView:storeStateChanged', queueState)
 })
 
 function createStyleSheet() {
@@ -103,14 +104,22 @@ function hookPlayerApiEvents() {
     webFrame.executeJavaScript(`
         window.ytmdPlayerBar.playerApi_.addEventListener('onVideoProgress', (progress) => { window.ytmd.sendVideoProgress(progress) });
         window.ytmdPlayerBar.playerApi_.addEventListener('onStateChange', (state) => { window.ytmd.sendVideoState(state) });
-        window.ytmdPlayerBar.playerApi_.addEventListener('onVideoDataChange', (event) => { if (event.type === 'dataloaded' && event.playertype === 1) { window.ytmd.sendVideoData(document.getElementById("layout").playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId()) } });
+        window.ytmdPlayerBar.playerApi_.addEventListener('onVideoDataChange', (event) => { if (event.type === 'dataloaded' && event.playertype === 1) { window.ytmd.sendVideoData(window.ytmdPlayerBar.playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId()) } });
         window.ytmdPlayerBar.playerApi_.addEventListener('onAdStart', () => { window.ytmd.sendAdState(true) });
         window.ytmdPlayerBar.playerApi_.addEventListener('onAdEnd', () => { window.ytmd.sendAdState(false) });
+        window.ytmdPlayerBar.store.subscribe(() => {
+            // We don't want to see everything in the store as there can be some sensitive data so we only send what's necessary to operate
+            let state = window.ytmdPlayerBar.store.getState();
+            window.ytmd.sendStoreUpdate(state.queue)
+        })
     `);
 }
 
 window.addEventListener('load', async () => {
     if (window.location.hostname !== "music.youtube.com") {
+        if (window.location.hostname === 'consent.youtube.com') {
+            ipcRenderer.send('ytmView:loaded');
+        }
         return;
     }
 
@@ -149,7 +158,7 @@ window.addEventListener('load', async () => {
 
     if (continueWhereYouLeftOff) {
         // The last page the user was on is already a page where it will be playing a song from (no point telling YTM to play it again)
-        if (!state.lastUrl.startsWith("https://music.youtube.com/watch")) {
+        if (!state.lastUrl.startsWith("https://music.youtube.com/watch") && state.lastVideoId) {
             document.dispatchEvent(new CustomEvent('yt-navigate', {
                 detail: {
                     endpoint: {
@@ -160,27 +169,31 @@ window.addEventListener('load', async () => {
                     }
                 }
             }));
+        } else {
+            webFrame.executeJavaScript(`
+                window.ytmd.sendVideoData(document.getElementById("layout").playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId());
+            `);
         }
     }
 
-    ipcRenderer.on('shortcut:triggered', async (event, shortcut) => {
-        if (shortcut === 'playPause') {
+    ipcRenderer.on('remoteControl:execute', async (event, command, value) => {
+        if (command === 'playPause') {
             webFrame.executeJavaScript(`
                 window.ytmdPlayerBar.playing_ ? window.ytmdPlayerBar.playerApi_.pauseVideo() : window.ytmdPlayerBar.playerApi_.playVideo();
             `);
-        } else if (shortcut === 'next') {
+        } else if (command === 'next') {
             webFrame.executeJavaScript(`
                 window.ytmdPlayerBar.playerApi_.nextVideo();
             `);
-        } else if (shortcut === 'previous') {
+        } else if (command === 'previous') {
             webFrame.executeJavaScript(`
                 window.ytmdPlayerBar.playerApi_.previousVideo();
             `);
-        } else if (shortcut === 'thumbsUp') {
+        } else if (command === 'thumbsUp') {
             // TODO
-        } else if (shortcut === 'thumbsDown') {
+        } else if (command === 'thumbsDown') {
             // TODO
-        } else if (shortcut === 'volumeUp') {
+        } else if (command === 'volumeUp') {
             const currentVolume: number = await webFrame.executeJavaScript(`
                 window.ytmdPlayerBar.playerApi_.getVolume();
             `);
@@ -192,7 +205,7 @@ window.addEventListener('load', async () => {
                     window.ytmdPlayerBar.store.dispatch({ type: 'SET_VOLUME', payload: ${newVolume} });
                 `);
             }
-        } else if (shortcut === 'volumeDown') {
+        } else if (command === 'volumeDown') {
             const currentVolume: number = await webFrame.executeJavaScript(`
                 window.ytmdPlayerBar.playerApi_.getVolume();
             `);
@@ -204,12 +217,16 @@ window.addEventListener('load', async () => {
                     window.ytmdPlayerBar.store.dispatch({ type: 'SET_VOLUME', payload: ${newVolume} });
                 `);
             }
+        } else if (command === 'navigate') {
+            const endpoint = value;
+            console.log('navigating from remote command', endpoint);
+            document.dispatchEvent(new CustomEvent('yt-navigate', {
+                detail: {
+                    endpoint
+                }
+            }));
         }
     });
 
     ipcRenderer.send('ytmView:loaded');
-})
-
-window.addEventListener('DOMContentLoaded', () => {
-
-})
+});
