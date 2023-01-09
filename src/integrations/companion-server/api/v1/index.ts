@@ -183,7 +183,8 @@ const CompanionServerAPIv1: FastifyPluginCallback<CompanionServerAPIv1Options> =
 
             response.send({
                 token
-            })
+            });
+            options.getStore().set('integrations.companionServerAuthWindowEnabled', await safeStorage.encryptString("false"));
         } else {
             response.send({
                 error: 'AUTHORIZATION_DENIED'
