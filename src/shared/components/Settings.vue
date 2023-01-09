@@ -90,11 +90,11 @@ function changeTab(newTab: number) {
         </ul>
         <div class="content">
             <div v-if="currentTab === 1" class="general-tab">
-                <!--<div class="setting">
+                <div class="setting">
                     <p>Hide to tray on close</p>
                     <input v-model="hideToTrayOnClose" @change="settingsChanged" class="toggle" type="checkbox" />
                 </div>
-                <div class="setting">
+                <!--<div class="setting">
                     <p>Show notification on song change</p>
                     <input v-model="showNotificationOnSongChange" @change="settingsChanged" class="toggle"
                         type="checkbox" />

@@ -10,7 +10,10 @@ import { rendererConfig } from './webpack.renderer.config';
 
 const config: ForgeConfig = {
   packagerConfig: {
-    icon: './src/assets/icons/ytmd'
+    icon: './src/assets/icons/ytmd',
+    extraResource: [
+      './src/assets/icons'
+    ]
   },
   rebuildConfig: {},
   makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],

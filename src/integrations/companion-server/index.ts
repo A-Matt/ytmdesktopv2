@@ -1,4 +1,4 @@
-import { EventEmitter } from 'node:events';
+import { EventEmitter } from 'events';
 import IIntegration from '../integration';
 import Fastify, { FastifyInstance } from 'fastify';
 import FastifyIO from 'fastify-socket.io';

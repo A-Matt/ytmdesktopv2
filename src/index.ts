@@ -1,5 +1,6 @@
-import { app, BrowserView, BrowserWindow, globalShortcut, ipcMain, safeStorage, session, shell } from 'electron';
+import { app, BrowserView, BrowserWindow, globalShortcut, ipcMain, Menu, safeStorage, session, shell, Tray } from 'electron';
 import ElectronStore from 'electron-store';
+import path from 'path';
 import CompanionServer from './integrations/companion-server';
 import playerStateStore from './player-state-store';
 import { StoreSchema } from './shared/store/schema';
@@ -22,6 +23,8 @@ const companionServer = new CompanionServer();
 let mainWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let ytmView: BrowserView = null;
+let tray = null;
+let trayContextMenu = null;
 
 let companionAuthWindowEnableTimeout: NodeJS.Timeout | null = null;
 
@@ -422,7 +425,11 @@ app.on('ready', () => {
 
   ipcMain.on('mainWindow:close', () => {
     if (mainWindow !== null) {
-      mainWindow.close();
+      if (store.get('general').hideToTrayOnClose) {
+        mainWindow.hide();
+      } else {
+        app.quit();
+      }
     }
   });
 
@@ -534,6 +541,55 @@ app.on('ready', () => {
 
   // Run functions which rely on ready event
   integrationsSetupAppReady();
+
+  // Create the tray
+  tray = new Tray(path.join(process.env.NODE_ENV === 'development' ? path.join(app.getAppPath(), 'src/assets') : process.resourcesPath, process.platform === 'win32' ? 'icons/tray.ico' : 'icons/tray.png'));
+  trayContextMenu = Menu.buildFromTemplate([
+    {
+      label: 'YouTube Music Desktop',
+      type: 'normal',
+      enabled: false
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Play/Pause',
+      type: 'normal',
+      click: () => {
+        ytmView.webContents.send('remoteControl:execute', 'playPause');
+      }
+    },
+    {
+      label: 'Previous',
+      type: 'normal',
+      click: () => {
+        ytmView.webContents.send('remoteControl:execute', 'previous');
+      }
+    },
+    {
+      label: 'Next',
+      type: 'normal',
+      click: () => {
+        ytmView.webContents.send('remoteControl:execute', 'next');
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Quit',
+      type: 'normal',
+      role: 'quit'
+    },
+  ]);
+  tray.setToolTip('YouTube Music Desktop');
+  tray.setContextMenu(trayContextMenu);
+  tray.on('click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+    }
+  })
 
   createMainWindow();
 });

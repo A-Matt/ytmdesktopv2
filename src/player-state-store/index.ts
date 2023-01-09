@@ -1,4 +1,4 @@
-import { EventEmitter } from 'node:events';
+import { EventEmitter } from 'events';
 
 class PlayerStateStore {
     private videoProgress = 0;
