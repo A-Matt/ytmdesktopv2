@@ -255,10 +255,15 @@ const createOrShowSettingsWindow = (): void => {
     return;
   }
 
+  const mainWindowPosition = mainWindow.getPosition();
+  const mainWindowSize = mainWindow.getSize();
+
   // Create the browser window.
   settingsWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    x: mainWindowPosition[0] + (mainWindowSize[0] / 2 - 400),
+    y: mainWindowPosition[1] + (mainWindowSize[1] / 2 - 300),
     minimizable: false,
     maximizable: false,
     resizable: false,
