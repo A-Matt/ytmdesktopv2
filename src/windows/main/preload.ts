@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('ytmd', {
     restoreWindow: () => ipcRenderer.send("mainWindow:restore"),
     closeWindow: () => ipcRenderer.send("mainWindow:close"),
     handleWindowEvents: (callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void) => ipcRenderer.on("mainWindow:stateChanged", callback),
-    openSettingsWindow: () => ipcRenderer.send("settingsWindow:open")
+    openSettingsWindow: () => ipcRenderer.send("settingsWindow:open"),
+    switchFocus: (context: string) => ipcRenderer.send('ytmView:switchFocus', context)
 });

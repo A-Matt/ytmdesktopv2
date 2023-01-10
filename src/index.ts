@@ -509,6 +509,18 @@ app.on('ready', () => {
     playerStateStore.updateQueue(queue);
   });
 
+  ipcMain.on('ytmView:switchFocus', (event, context) => {
+    if (context === 'main') {
+      if (mainWindow && ytmView.webContents.isFocused()) {
+        mainWindow.webContents.focus();
+      }
+    } else if (context === 'ytm') {
+      if (ytmView && mainWindow.webContents.isFocused()) {
+        ytmView.webContents.focus();
+      }
+    }
+  })
+
   // Handle settings store ipc
   ipcMain.on('settings:set', (event, key: string, value?: string) => {
     store.set(key, value);

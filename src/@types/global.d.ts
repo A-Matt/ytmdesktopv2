@@ -17,6 +17,9 @@ declare global {
             getAppName(): string,
             getCode(): string,
 
+            // Main window specific
+            switchFocus(context: 'main' | 'ytm'): void,
+
             // Window control
             minimizeWindow(): void,
             maximizeWindow(): void,

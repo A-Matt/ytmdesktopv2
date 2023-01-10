@@ -94,6 +94,16 @@ function createNavigationMenuArrows() {
     pivotBar.prepend(historyBackElement);
 }
 
+function createKeyboardNavigation() {
+    const keyboardNavigation = document.createElement('div');
+    keyboardNavigation.tabIndex = 32767;
+    keyboardNavigation.onfocus = () => {
+        keyboardNavigation.blur();
+        ipcRenderer.send('ytmView:switchFocus', 'main')
+    }
+    document.body.appendChild(keyboardNavigation);
+}
+
 function hideChromecastButton() {
     webFrame.executeJavaScript(`
         window.ytmdPlayerBar.store.dispatch({ type: 'SET_CAST_AVAILABLE', payload: false });
@@ -150,6 +160,7 @@ window.addEventListener('load', async () => {
 
     createStyleSheet();
     createNavigationMenuArrows();
+    createKeyboardNavigation();
     hideChromecastButton();
     hookPlayerApiEvents();
 

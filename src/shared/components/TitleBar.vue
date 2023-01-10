@@ -35,23 +35,24 @@ window.ytmd.handleWindowEvents((event, state) => {
         </div>
         <div class="right">
             <div class="app-buttons">
-                <button v-if="hasSettingsButton" class="app-button" @click="openSettingsWindow">
+                <button v-if="hasSettingsButton" class="app-button" @click="openSettingsWindow" tabindex="1">
                     <span class="material-symbols-outlined">settings</span>
                 </button>
             </div>
             <div class="windows-action-buttons">
-                <button v-if="hasMinimizeButton" class="action-button window-minimize" @click="minimizeWindow">
+                <button v-if="hasMinimizeButton" class="action-button window-minimize" @click="minimizeWindow"
+                    tabindex="2">
                     <span class="material-symbols-outlined">remove</span>
                 </button>
                 <button v-if="hasMaximizeButton && !windowMaximized" class="action-button window-maximize"
-                    @click="maximizeWindow">
+                    @click="maximizeWindow" tabindex="3">
                     <span class="material-symbols-outlined">square</span>
                 </button>
                 <button v-if="hasMinimizeButton && windowMaximized" class="action-button window-restore"
-                    @click="restoreWindow">
+                    @click="restoreWindow" tabindex="4">
                     <span class="material-symbols-outlined">filter_none</span>
                 </button>
-                <button class="action-button window-close" @click="closeWindow">
+                <button class="action-button window-close" @click="closeWindow" tabindex="5">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -95,9 +96,9 @@ window.ytmd.handleWindowEvents((event, state) => {
         'opsz' 24;
 }
 
-button:focus {
+/*button:focus {
     outline: none;
-}
+}*/
 
 .app-button {
     width: 28px;
