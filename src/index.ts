@@ -25,6 +25,12 @@ let settingsWindow: BrowserWindow = null;
 let ytmView: BrowserView = null;
 let tray = null;
 let trayContextMenu = null;
+let mainWindowBounds: Electron.Rectangle = null;
+
+// These variables tend to be changed often so we store it in memory and write on close (less disk usage)
+let lastUrl = '';
+let lastVideoId = '';
+let lastPlaylistId = '';
 
 let companionAuthWindowEnableTimeout: NodeJS.Timeout | null = null;
 
@@ -59,7 +65,9 @@ const store = new ElectronStore<StoreSchema>({
       lastUrl: 'https://music.youtube.com/',
       lastVideoId: '',
       lastPlaylistId: '',
-      companionServerAuthWindowEnableTime: null
+      companionServerAuthWindowEnableTime: null,
+      windowBounds: null,
+      windowMaximized: false
     }
   }
 });
@@ -230,7 +238,7 @@ function sendMainWindowStateIpc() {
 // Functions with call to ytmView renderer
 function ytmViewNavigated() {
   if (ytmView !== null) {
-    store.set('state.lastUrl', ytmView.webContents.getURL());
+    lastUrl = ytmView.webContents.getURL();
     ytmView.webContents.send('ytmView:navigationStateChanged', {
       canGoBack: ytmView.webContents.canGoBack(),
       canGoForward: ytmView.webContents.canGoForward(),
@@ -280,7 +288,7 @@ const createOrShowSettingsWindow = (): void => {
     },
   });
 
-  // Attach events to main window
+  // Attach events to settings window
   settingsWindow.on('maximize', sendSettingsWindowStateIpc)
   settingsWindow.on('unmaximize', sendSettingsWindowStateIpc)
   settingsWindow.on('minimize', sendSettingsWindowStateIpc)
@@ -314,6 +322,15 @@ const createMainWindow = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
+  const windowBounds = store.get('state').windowBounds;
+  const windowMaximized = store.get('state').windowMaximized;
+  if (windowBounds) {
+    mainWindow.setBounds(windowBounds);
+  }
+  if (windowMaximized) {
+    mainWindowBounds = mainWindow.getBounds();
+    mainWindow.maximize();
+  }
 
   // Create the YouTube Music view
   ytmView = new BrowserView({
@@ -385,6 +402,23 @@ const createMainWindow = (): void => {
   mainWindow.on('unmaximize', sendMainWindowStateIpc)
   mainWindow.on('minimize', sendMainWindowStateIpc)
   mainWindow.on('restore', sendMainWindowStateIpc)
+  mainWindow.on('close', () => {
+    store.set('state.lastUrl', lastUrl);
+    store.set('state.lastVideoId', lastVideoId);
+    store.set('state.lastPlaylistId', lastPlaylistId);
+
+    const bounds = mainWindow.isMaximized() ? mainWindowBounds : mainWindow.getBounds();
+    store.set('state.windowBounds', bounds);
+    store.set('state.windowMaximized', mainWindow.isMaximized());
+  });
+  mainWindow.on('will-move', () => {
+    if (!mainWindow.isMaximized())
+      mainWindowBounds = mainWindow.getBounds();
+  })
+  mainWindow.on('will-resize', () => {
+    if (!mainWindow.isMaximized())
+      mainWindowBounds = mainWindow.getBounds();
+  })
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
@@ -413,6 +447,7 @@ app.on('ready', () => {
 
   ipcMain.on('mainWindow:maximize', () => {
     if (mainWindow !== null) {
+      mainWindowBounds = mainWindow.getBounds();
       mainWindow.maximize();
     }
   });
@@ -432,6 +467,10 @@ app.on('ready', () => {
       }
     }
   });
+
+  ipcMain.on('mainWindow:requestWindowState', () => {
+    sendMainWindowStateIpc();
+  })
 
   // Handle settings window ipc
   ipcMain.on('settingsWindow:open', () => {
@@ -466,12 +505,21 @@ app.on('ready', () => {
   ipcMain.on('ytmView:loaded', () => {
     if (ytmView !== null && mainWindow !== null) {
       mainWindow.addBrowserView(ytmView);
-      ytmView.setBounds({
-        x: 0,
-        y: 36,
-        width: mainWindow.getBounds().width,
-        height: mainWindow.getBounds().height - 36,
-      });
+      if (mainWindow.isMaximized()) {
+        ytmView.setBounds({
+          x: 0,
+          y: 36,
+          width: mainWindow.getBounds().width,
+          height: mainWindow.getBounds().height - 52,
+        });
+      } else {
+        ytmView.setBounds({
+          x: 0,
+          y: 36,
+          width: mainWindow.getBounds().width,
+          height: mainWindow.getBounds().height - 36,
+        });
+      }
     }
   });
 
@@ -499,8 +547,8 @@ app.on('ready', () => {
   });
 
   ipcMain.on('ytmView:videoDataChanged', (event, videoDetails, playlistId) => {
-    store.set('state.lastVideoId', videoDetails.videoId);
-    store.set('state.lastPlaylistId', playlistId);
+    lastVideoId = videoDetails.videoId;
+    lastPlaylistId = playlistId;
 
     playerStateStore.updateVideoDetails(videoDetails, playlistId);
   });

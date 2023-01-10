@@ -27,5 +27,7 @@ export type StoreSchema = {
         lastVideoId: string,
         lastPlaylistId: string,
         companionServerAuthWindowEnableTime: string | null // string (ISO8601) | Encrypted for security
+        windowBounds: Electron.Rectangle | null
+        windowMaximized: boolean
     }
 }

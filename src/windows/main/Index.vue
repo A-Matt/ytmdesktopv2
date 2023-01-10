@@ -17,6 +17,8 @@ onMounted(() => {
     keyboardFocus.value.onfocus = () => {
         window.ytmd.switchFocus('ytm');
     }
+
+    window.ytmd.requestWindowState();
 })
 </script>
 

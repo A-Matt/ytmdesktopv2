@@ -26,6 +26,7 @@ declare global {
             restoreWindow(): void,
             closeWindow(): void,
             handleWindowEvents(callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void),
+            requestWindowState(): void
         }
     }
 }
