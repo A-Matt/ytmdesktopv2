@@ -25,7 +25,6 @@ let settingsWindow: BrowserWindow = null;
 let ytmView: BrowserView = null;
 let tray = null;
 let trayContextMenu = null;
-let mainWindowBounds: Electron.Rectangle = null;
 
 // These variables tend to be changed often so we store it in memory and write on close (less disk usage)
 let lastUrl = '';
@@ -328,7 +327,6 @@ const createMainWindow = (): void => {
     mainWindow.setBounds(windowBounds);
   }
   if (windowMaximized) {
-    mainWindowBounds = mainWindow.getBounds();
     mainWindow.maximize();
   }
 
@@ -407,18 +405,9 @@ const createMainWindow = (): void => {
     store.set('state.lastVideoId', lastVideoId);
     store.set('state.lastPlaylistId', lastPlaylistId);
 
-    const bounds = mainWindow.isMaximized() ? mainWindowBounds : mainWindow.getBounds();
-    store.set('state.windowBounds', bounds);
+    store.set('state.windowBounds', mainWindow.getNormalBounds());
     store.set('state.windowMaximized', mainWindow.isMaximized());
   });
-  mainWindow.on('will-move', () => {
-    if (!mainWindow.isMaximized())
-      mainWindowBounds = mainWindow.getBounds();
-  })
-  mainWindow.on('will-resize', () => {
-    if (!mainWindow.isMaximized())
-      mainWindowBounds = mainWindow.getBounds();
-  })
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
@@ -447,7 +436,6 @@ app.on('ready', () => {
 
   ipcMain.on('mainWindow:maximize', () => {
     if (mainWindow !== null) {
-      mainWindowBounds = mainWindow.getBounds();
       mainWindow.maximize();
     }
   });
