@@ -61,6 +61,7 @@ function getSmallImageText(state: number) {
 export default class DiscordPresence implements IIntegration {
     private discordClient: DiscordRPC.Client = null;
     private ready = false;
+    private pauseTimeout: string | number | NodeJS.Timeout = null;
 
     private playerStateChanged(state: any) {
         if (this.ready && state.videoDetails) {
@@ -81,6 +82,25 @@ export default class DiscordPresence implements IIntegration {
                     }
                 ]
             });
+
+            if (state.trackState === 2) {
+                if (this.pauseTimeout) {
+                    clearTimeout(this.pauseTimeout);
+                    this.pauseTimeout = null;
+                }
+
+                this.pauseTimeout = setTimeout(() => {
+                    if (this.discordClient && this.ready) {
+                        this.discordClient.clearActivity();
+                    }
+                    this.pauseTimeout = null;
+                }, 30 * 1000);
+            } else {
+                if (this.pauseTimeout) {
+                    clearTimeout(this.pauseTimeout);
+                    this.pauseTimeout = null;
+                }
+            }
         } else if (this.ready && !state.videoDetails) {
             this.discordClient.clearActivity();
         }
