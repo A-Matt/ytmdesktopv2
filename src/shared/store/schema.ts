@@ -10,8 +10,9 @@ export type StoreSchema = {
     },
     integrations: {
         companionServerEnabled: boolean,
-        companionServerAuthWindowEnabled: string | null // boolean | Encrypted for security
-        companionServerAuthTokens: string | null // array[object] | Encrypted for security
+        companionServerAuthWindowEnabled: string | null, // boolean | Encrypted for security
+        companionServerAuthTokens: string | null, // array[object] | Encrypted for security
+        discordPresenceEnabled: boolean
     },
     shortcuts: {
         playPause: string,
