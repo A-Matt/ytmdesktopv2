@@ -73,7 +73,7 @@ export default class DiscordPresence implements IIntegration {
                 smallImageKey: getSmallImageKey(state.trackState),
                 smallImageText: getSmallImageText(state.trackState),
                 instance: false,
-                endTimestamp: Date.now() + (parseInt(state.videoDetails.lengthSeconds) - state.videoProgress) * 1000,
+                endTimestamp: state.trackState === 1 ? Date.now() + (parseInt(state.videoDetails.lengthSeconds) - state.videoProgress) * 1000 : undefined,
                 buttons: [
                     {
                         label: 'Play on YouTube Music',
