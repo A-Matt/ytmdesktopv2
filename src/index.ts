@@ -281,7 +281,6 @@ const createOrShowSettingsWindow = (): void => {
   }
 
   const mainWindowBounds = mainWindow.getBounds();
-  console.log(mainWindowBounds);
 
   // Create the browser window.
   settingsWindow = new BrowserWindow({
@@ -301,9 +300,6 @@ const createOrShowSettingsWindow = (): void => {
       preload: SETTINGS_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
-  console.log(mainWindowBounds.x + (mainWindowBounds.width / 2 - 400));
-  console.log(mainWindowBounds.y + (mainWindowBounds.height / 2 - 300));
-  console.log(settingsWindow.getPosition());
 
   // Attach events to settings window
   settingsWindow.on('maximize', sendSettingsWindowStateIpc)
