@@ -81,6 +81,8 @@ export default class DiscordPresence implements IIntegration {
                     }
                 ]
             });
+        } else if (this.ready && !state.videoDetails) {
+            this.discordClient.clearActivity();
         }
     }
 
