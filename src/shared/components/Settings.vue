@@ -12,6 +12,8 @@ const general: StoreSchema['general'] = await store.get('general');
 const playback: StoreSchema['playback'] = await store.get('playback');
 const integrations: StoreSchema['integrations'] = await store.get('integrations');
 const shortcuts: StoreSchema['shortcuts'] = await store.get('shortcuts');
+const notifications: StoreSchema['notifications'] = await store.get('notifications');
+
 
 const hideToTrayOnClose = ref<boolean>(general.hideToTrayOnClose);
 const showNotificationOnSongChange = ref<boolean>(general.showNotificationOnSongChange);
@@ -19,6 +21,7 @@ const startOnBoot = ref<boolean>(general.startOnBoot);
 const startMinimized = ref<boolean>(general.startMinimized);
 
 const continueWhereYouLeftOff = ref<boolean>(playback.continueWhereYouLeftOff);
+const taskbarProgress = ref<boolean>(playback.taskbarProgress);
 
 const companionServerEnabled = ref<boolean>(integrations.companionServerEnabled);
 const companionServerAuthWindowEnabled = ref<boolean>(await safeStorage.decryptString(integrations.companionServerAuthWindowEnabled) === 'true' ? true : false);
@@ -32,6 +35,8 @@ const shortcutThumbsDown = ref<string>(shortcuts.thumbsDown);
 const shortcutVolumeUp = ref<string>(shortcuts.volumeUp);
 const shortcutVolumeDown = ref<string>(shortcuts.volumeDown);
 
+const nowPlaying = ref<boolean>(notifications.nowPlaying);
+
 store.onDidAnyChange(async (newState, oldState) => {
     hideToTrayOnClose.value = newState.general.hideToTrayOnClose;
     showNotificationOnSongChange.value = newState.general.showNotificationOnSongChange;
@@ -39,6 +44,7 @@ store.onDidAnyChange(async (newState, oldState) => {
     startMinimized.value = newState.general.startMinimized;
 
     continueWhereYouLeftOff.value = newState.playback.continueWhereYouLeftOff;
+    taskbarProgress.value = newState.playback.taskbarProgress;
 
     companionServerEnabled.value = newState.integrations.companionServerEnabled;
     companionServerAuthWindowEnabled.value = await safeStorage.decryptString(newState.integrations.companionServerAuthWindowEnabled) === 'true' ? true : false
@@ -51,6 +57,8 @@ store.onDidAnyChange(async (newState, oldState) => {
     shortcutThumbsDown.value = newState.shortcuts.thumbsDown;
     shortcutVolumeUp.value = newState.shortcuts.volumeUp;
     shortcutVolumeDown.value = newState.shortcuts.volumeDown;
+
+    nowPlaying.value = newState.notifications.nowPlaying;
 });
 
 async function settingsChanged() {
@@ -60,6 +68,7 @@ async function settingsChanged() {
     store.set('general.startMinimized', startMinimized.value);
 
     store.set('playback.continueWhereYouLeftOff', continueWhereYouLeftOff.value);
+    store.set('playback.taskbarProgress', taskbarProgress.value);
 
     store.set('integrations.companionServerEnabled', companionServerEnabled.value);
     store.set('integrations.companionServerAuthWindowEnabled', await safeStorage.encryptString(companionServerAuthWindowEnabled.value.toString()));
@@ -72,6 +81,8 @@ async function settingsChanged() {
     store.set('shortcuts.thumbsDown', shortcutThumbsDown.value);
     store.set('shortcuts.volumeUp', shortcutVolumeUp.value);
     store.set('shortcuts.volumeDown', shortcutVolumeDown.value);
+
+    store.set('notifications.nowPlaying', nowPlaying.value);
 }
 
 function changeTab(newTab: number) {
@@ -90,6 +101,8 @@ function changeTab(newTab: number) {
                     class="material-symbols-outlined">wifi_tethering</span>Integrations</li>
             <li :class="{ active: currentTab === 4 }" @click="changeTab(4)"><span
                     class="material-symbols-outlined">keyboard</span>Shortcuts</li>
+            <li :class="{ active: currentTab === 5 }" @click="changeTab(5)"><span
+                    class="material-symbols-outlined">notifications</span>Notifications</li>
         </ul>
         <div class="content">
             <div v-if="currentTab === 1" class="general-tab">
@@ -116,10 +129,10 @@ function changeTab(newTab: number) {
                     <p>Continue where you left off</p>
                     <input v-model="continueWhereYouLeftOff" @change="settingsChanged" class="toggle" type="checkbox" />
                 </div>
-                <!--<div class="setting">
+                <div class="setting">
                     <p>Show track progress on taskbar</p>
-                    <input class="toggle" type="checkbox" />
-                </div>-->
+                    <input v-model="taskbarProgress" @change="settingsChanged" class="toggle" type="checkbox" />
+                </div>
             </div>
             <div v-if="currentTab === 3" class="integrations-tab">
                 <div class="setting">
@@ -156,7 +169,7 @@ function changeTab(newTab: number) {
                 <!--<div class="setting">
                     <p>Thumbs Up</p>
                     <KeybindInput v-model="shortcutThumbsUp" @change="settingsChanged" />
-                </div> 
+                </div>
                 <div class="setting">
                     <p>Thumbs Down</p>
                     <KeybindInput v-model="shortcutThumbsDown" @change="settingsChanged" />
@@ -170,6 +183,13 @@ function changeTab(newTab: number) {
                     <KeybindInput v-model="shortcutVolumeDown" @change="settingsChanged" />
                 </div>
             </div>
+            <div v-if="currentTab === 5" class="notifications-tab">
+                <div class="setting">
+                    <p>Now playing</p>
+                    <input v-model="nowPlaying" @change="settingsChanged" class="toggle" type="checkbox" />
+                </div>
+            </div>
+
         </div>
     </div>
 </template>

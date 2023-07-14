@@ -57,6 +57,14 @@ function validateKey(event: KeyboardEvent) {
     if (event.code === 'ArrowDown') return 'Down'
     if (event.code === 'ArrowLeft') return 'Left'
     if (event.code === 'ArrowRight') return 'Right'
+
+    // Possible Fix for Accented Keys being stupid In JS
+    let keyCodeCharacter = String.fromCharCode(event.keyCode);
+    if (keyCodeCharacter !== event.key.toUpperCase()) {
+        console.log(keyCodeCharacter, event.key);
+        return 'CmdOrCtrl+Alt+' + keyCodeCharacter.toUpperCase();
+    }
+
     if (event.keyCode >= 65 && event.keyCode <= 90) return event.key.toUpperCase()
 
     return event.key

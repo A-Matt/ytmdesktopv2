@@ -7,6 +7,7 @@ export type StoreSchema = {
     },
     playback: {
         continueWhereYouLeftOff: boolean
+        taskbarProgress: boolean
     },
     integrations: {
         companionServerEnabled: boolean,
@@ -30,5 +31,9 @@ export type StoreSchema = {
         companionServerAuthWindowEnableTime: string | null // string (ISO8601) | Encrypted for security
         windowBounds: Electron.Rectangle | null
         windowMaximized: boolean
+    },
+
+    notifications: {
+        nowPlaying: boolean
     }
 }

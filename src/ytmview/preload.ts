@@ -5,7 +5,7 @@ import { StoreSchema } from "../shared/store/schema";
 const store = new Store<StoreSchema>();
 
 contextBridge.exposeInMainWorld('ytmd', {
-    sendVideoProgress: (volume: number) => ipcRenderer.send('ytmView:videoProgressChanged', volume),
+    sendVideoProgress: (progress: number) => ipcRenderer.send('ytmView:videoProgressChanged', progress),
     sendVideoState: (state: number) => ipcRenderer.send('ytmView:videoStateChanged', state),
     sendVideoData: (videoDetails: any, playlistId: string) => ipcRenderer.send('ytmView:videoDataChanged', videoDetails, playlistId),
     sendAdState: (adRunning: boolean) => ipcRenderer.send('ytmView:adStateChanged', adRunning),

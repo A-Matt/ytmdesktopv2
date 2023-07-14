@@ -32,9 +32,9 @@ const mapQueueItems = (item: any) => {
 
     return {
         thubmnails: playlistPanelVideoRenderer.thumbnail.thumbnails.map(mapThumbnails),
-        title: playlistPanelVideoRenderer.title.runs[0].text,
-        author: playlistPanelVideoRenderer.shortBylineText.runs[0].text,
-        duration: playlistPanelVideoRenderer.lengthText.runs[0].text
+        title: playlistPanelVideoRenderer.title.runs[0]?.text,
+        author: playlistPanelVideoRenderer.shortBylineText.runs[0]?.text,
+        duration: playlistPanelVideoRenderer.lengthText.runs[0]?.text
     };
 }
 

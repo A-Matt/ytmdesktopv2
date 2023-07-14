@@ -1,4 +1,4 @@
-import { app, BrowserView, BrowserWindow, globalShortcut, ipcMain, Menu, safeStorage, session, shell, Tray } from 'electron';
+import { app, BrowserView, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, Notification, safeStorage, session, shell, Tray } from 'electron';
 import ElectronStore from 'electron-store';
 import path from 'path';
 import CompanionServer from './integrations/companion-server';
@@ -17,6 +17,26 @@ declare const YTM_VIEW_PRELOAD_WEBPACK_ENTRY: string;
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
+}
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+}
+else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+
+      mainWindow.show();
+      mainWindow.focus();
+
+      // Do some more bits if the commandLine is provided.
+      // For example open to a video or playlist.
+    }
+  });
 }
 
 const companionServer = new CompanionServer();
@@ -46,7 +66,8 @@ const store = new ElectronStore<StoreSchema>({
       startMinimized: false
     },
     playback: {
-      continueWhereYouLeftOff: true
+      continueWhereYouLeftOff: true,
+      taskbarProgress: false,
     },
     integrations: {
       companionServerEnabled: false,
@@ -70,6 +91,9 @@ const store = new ElectronStore<StoreSchema>({
       companionServerAuthWindowEnableTime: null,
       windowBounds: null,
       windowMaximized: false
+    },
+    notifications: {
+      nowPlaying: false
     }
   }
 });
@@ -423,6 +447,43 @@ const createMainWindow = (): void => {
     store.set('state.windowMaximized', mainWindow.isMaximized());
   });
 
+  // Taskbar Stuff (Windows Only)
+  if (process.platform === 'win32') {
+    mainWindow.setThumbarButtons([
+      {
+        tooltip: 'Previous',
+        // FIX ICON PATH
+        icon: nativeImage.createFromPath(path.join(__dirname, '../assets/icons/tray.png')),
+        click() {
+          if (ytmView) {
+            ytmView.webContents.send('remoteControl:execute', 'previous');
+          }
+        }
+      },
+      {
+        tooltip: 'Play/Pause',
+        // FIX ICON PATH
+        icon: nativeImage.createFromPath(path.join(__dirname, '../assets/icons/tray.png')),
+        click() {
+          if (ytmView) {
+            ytmView.webContents.send('remoteControl:execute', 'playPause');
+          }
+        }
+      },
+      {
+        tooltip: 'Next',
+        // FIX ICON PATH
+        icon: nativeImage.createFromPath(path.join(__dirname, '../assets/icons/tray.png')),
+        click() {
+          if (ytmView) {
+            ytmView.webContents.send('remoteControl:execute', 'next');
+          }
+        }
+      }
+    ]);
+  }
+
+
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
@@ -538,11 +599,11 @@ app.on('ready', () => {
     // 5 -> Unknown (Only happens when loading new songs - unsure what this is for)
 
     // ytm state flow
-    // Play Button Click 
+    // Play Button Click
     //   -1 -> 5 -> -1 -> 3 -> 1
     // First Play Button Click (Only happens when the player is first loaded)
     //   -1 -> 3 -> 1
-    // Previous/Next Song Click 
+    // Previous/Next Song Click
     //   -1 -> 5 -> -1 -> 5 -> -1 -> 3 -> 1
 
     playerStateStore.updateVideoState(state);
@@ -553,6 +614,27 @@ app.on('ready', () => {
     lastPlaylistId = playlistId;
 
     playerStateStore.updateVideoDetails(videoDetails, playlistId);
+
+    if (store.get('notifications.nowPlaying')) {
+      const nowPlayingNotification = new Notification(
+        {
+          title: 'Now Playing',
+          body: videoDetails.title,
+          icon: videoDetails.thumbnail.thumbnails[0].url,
+
+          timeoutType: 'default',
+          silent: true,
+          urgency: 'low',
+        }
+      );
+
+      nowPlayingNotification.show();
+      nowPlayingNotification.on('click', () => {
+        // Show, bring the window to the front, and focus it
+        mainWindow.show();
+        ytmView.webContents.focus();
+      });
+    }
   });
 
   ipcMain.on('ytmView:storeStateChanged', (event, queue) => {
@@ -599,7 +681,8 @@ app.on('ready', () => {
   });
 
   // Register global shortcuts
-  registerShortcuts()
+  registerShortcuts();
+
 
   // Run functions which rely on ready event
   integrationsSetupAppReady();
