@@ -449,11 +449,12 @@ const createMainWindow = (): void => {
 
   // Taskbar Stuff (Windows Only)
   if (process.platform === 'win32') {
+    const assetFolder = path.join(process.env.NODE_ENV === 'development' ? path.join(app.getAppPath(), 'src/assets') : process.resourcesPath);
     mainWindow.setThumbarButtons([
       {
         tooltip: 'Previous',
         // FIX ICON PATH
-        icon: nativeImage.createFromPath(path.join(__dirname, '../assets/icons/tray.png')),
+        icon: nativeImage.createFromPath(path.join(assetFolder, 'icons/media-controls/previous.png')),
         click() {
           if (ytmView) {
             ytmView.webContents.send('remoteControl:execute', 'previous');
@@ -463,7 +464,7 @@ const createMainWindow = (): void => {
       {
         tooltip: 'Play/Pause',
         // FIX ICON PATH
-        icon: nativeImage.createFromPath(path.join(__dirname, '../assets/icons/tray.png')),
+        icon: nativeImage.createFromPath(path.join(assetFolder, 'icons/media-controls/play.png')),
         click() {
           if (ytmView) {
             ytmView.webContents.send('remoteControl:execute', 'playPause');
@@ -473,7 +474,7 @@ const createMainWindow = (): void => {
       {
         tooltip: 'Next',
         // FIX ICON PATH
-        icon: nativeImage.createFromPath(path.join(__dirname, '../assets/icons/tray.png')),
+        icon: nativeImage.createFromPath(path.join(assetFolder, 'icons/media-controls/next.png')),
         click() {
           if (ytmView) {
             ytmView.webContents.send('remoteControl:execute', 'next');

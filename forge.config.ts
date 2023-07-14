@@ -16,7 +16,19 @@ const config: ForgeConfig = {
     ]
   },
   rebuildConfig: {},
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+  makers: [
+    // Windows
+    new MakerSquirrel({}),
+
+    // MacOS, Darwin
+    new MakerZIP({},['darwin']),
+
+    // RedHat-based Linux
+    new MakerRpm({}),
+
+    // Debian-based Linux
+    new MakerDeb({})
+  ],
   plugins: [
     new WebpackPlugin({
       mainConfig,

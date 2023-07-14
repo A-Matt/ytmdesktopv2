@@ -1,6 +1,6 @@
 {
   "name": "ytmdesktopv2",
-  "productName": "ytmdesktopv2",
+  "productName": "YTM Desktop V2",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".webpack/main",
@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": {
-    "name": "NovusTheory",
+    "name": "NovusTheory & contributors",
     "email": "novustheory@gmail.com"
   },
   "license": "GPLV3",

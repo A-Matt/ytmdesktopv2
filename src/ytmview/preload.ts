@@ -181,9 +181,14 @@ window.addEventListener('load', async () => {
                 }
             }));
         } else {
-            webFrame.executeJavaScript(`
-                window.ytmd.sendVideoData(document.getElementById("layout").playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId());
-            `);
+            try {
+                webFrame.executeJavaScript(`
+                    window.ytmd.sendVideoData(document.getElementById("layout").playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId());
+                `);
+            }
+            catch (e) {
+                console.log('Continue Where I left off', e);
+            }
         }
     }
 
