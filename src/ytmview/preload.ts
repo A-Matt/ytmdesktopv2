@@ -18,10 +18,13 @@ function createStyleSheet() {
         `
         .ytmd-history-back, .ytmd-history-forward {
             cursor: pointer;
-            padding-top: 12px;
             margin: 0 18px 0 2px;
             font-size: 24px;
             color: rgba(255, 255, 255, 0.5);
+        }
+
+        .ytmd-history-back.pivotbar, .ytmd-history-forward.pivotbar {
+            padding-top: 12px;
         }
 
         .ytmd-history-forward {
@@ -52,8 +55,6 @@ function createMaterialSymbolsLink() {
 }
 
 function createNavigationMenuArrows() {
-    const pivotBar = document.getElementsByTagName("ytmusic-pivot-bar-renderer")[0];
-
     // Go back in history
     const historyBackElement = document.createElement('span');
     historyBackElement.classList.add('material-symbols-outlined', 'ytmd-history-back', 'disabled');
@@ -90,8 +91,19 @@ function createNavigationMenuArrows() {
         }
     })
 
-    pivotBar.prepend(historyForwardElement);
-    pivotBar.prepend(historyBackElement);
+    const pivotBar = document.getElementsByTagName("ytmusic-pivot-bar-renderer")[0];
+    if (!pivotBar) {
+        // New YTM UI
+        const searchBar = document.getElementsByTagName("ytmusic-search-box")[0];
+        const navBar = searchBar.parentNode;
+        navBar.insertBefore(historyForwardElement, searchBar);
+        navBar.insertBefore(historyBackElement, historyForwardElement);
+    } else {
+        historyForwardElement.classList.add("pivotbar");
+        historyBackElement.classList.add("pivotbar");
+        pivotBar.prepend(historyForwardElement);
+        pivotBar.prepend(historyBackElement);
+    }
 }
 
 function createKeyboardNavigation() {
@@ -182,7 +194,7 @@ window.addEventListener('load', async () => {
             }));
         } else {
             webFrame.executeJavaScript(`
-                window.ytmd.sendVideoData(document.getElementById("layout").playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId());
+                window.ytmd.sendVideoData(window.ytmdPlayerBar.playerApi_.getPlayerResponse().videoDetails, window.ytmdPlayerBar.playerApi_.getPlaylistId());
             `);
         }
     }

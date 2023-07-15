@@ -353,6 +353,18 @@ const createMainWindow = (): void => {
       preload: YTM_VIEW_PRELOAD_WEBPACK_ENTRY,
     },
   });
+  // This block of code adding the browser view setting the bounds and removing it is a temporary fix for a bug in YTMs UI
+  // where a small window size will lock the scrollbar and have difficult unlocking it without changing the guide bar collapse state
+  if (ytmView !== null && mainWindow !== null) {
+    mainWindow.addBrowserView(ytmView);
+    ytmView.setBounds({
+      x: 0,
+      y: 0,
+      width: 1920,
+      height: 1080,
+    });
+    mainWindow.removeBrowserView(ytmView);
+  }
 
   let navigateDefault = true;
 
@@ -392,21 +404,12 @@ const createMainWindow = (): void => {
   // Attach events to main window
   mainWindow.on('resize', () => {
     setTimeout(() => {
-      if (mainWindow.isMaximized()) {
-        ytmView.setBounds({
-          x: 0,
-          y: 36,
-          width: mainWindow.getBounds().width,
-          height: mainWindow.getBounds().height - 52,
-        });
-      } else {
-        ytmView.setBounds({
-          x: 0,
-          y: 36,
-          width: mainWindow.getBounds().width,
-          height: mainWindow.getBounds().height - 36,
-        });
-      }
+      ytmView.setBounds({
+        x: 0,
+        y: 36,
+        width: mainWindow.getContentBounds().width,
+        height: mainWindow.getContentBounds().height - 36,
+      });
     });
   });
 
@@ -507,21 +510,12 @@ app.on('ready', () => {
   ipcMain.on('ytmView:loaded', () => {
     if (ytmView !== null && mainWindow !== null) {
       mainWindow.addBrowserView(ytmView);
-      if (mainWindow.isMaximized()) {
-        ytmView.setBounds({
-          x: 0,
-          y: 36,
-          width: mainWindow.getBounds().width,
-          height: mainWindow.getBounds().height - 52,
-        });
-      } else {
-        ytmView.setBounds({
-          x: 0,
-          y: 36,
-          width: mainWindow.getBounds().width,
-          height: mainWindow.getBounds().height - 36,
-        });
-      }
+      ytmView.setBounds({
+        x: 0,
+        y: 36,
+        width: mainWindow.getContentBounds().width,
+        height: mainWindow.getContentBounds().height - 36,
+      });
     }
   });
 
