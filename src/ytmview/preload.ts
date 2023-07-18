@@ -198,8 +198,6 @@ function createAdditionalMiddleControls() {
                             } else {
                                 libraryButton.set("data.toggled", false);
                             }
-
-                            console.log(item.toggleMenuServiceItemRenderer.defaultIcon.iconType, state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken], libraryButton.data.toggled);
     
                             if (item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_SAVED") {
                                 // Default value is saved to library (false == remove from library, true == add to library)
