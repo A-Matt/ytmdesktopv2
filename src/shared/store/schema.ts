@@ -3,7 +3,8 @@ export type StoreSchema = {
         hideToTrayOnClose: boolean,
         showNotificationOnSongChange: boolean,
         startOnBoot: boolean,
-        startMinimized: boolean
+        startMinimized: boolean,
+        alwaysShowVolumeSlider: boolean
     },
     playback: {
         continueWhereYouLeftOff: boolean

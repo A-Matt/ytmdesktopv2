@@ -42,6 +42,11 @@ function createStyleSheet() {
         .ytmd-hidden {
             display: none;
         }
+
+        .persist-volume-slider {
+            opacity: 1 !important;
+            pointer-events: initial !important;
+        }
         `
     ))
     document.head.appendChild(css);
@@ -199,6 +204,11 @@ window.addEventListener('load', async () => {
         }
     }
 
+    const alwaysShowVolumeSlider = (await store.get('general')).alwaysShowVolumeSlider;
+    if (alwaysShowVolumeSlider) {
+        document.querySelector("#volume-slider").classList.add("persist-volume-slider");
+    }
+
     ipcRenderer.on('remoteControl:execute', async (event, command, value) => {
         if (command === 'playPause') {
             webFrame.executeJavaScript(`
@@ -248,6 +258,20 @@ window.addEventListener('load', async () => {
                     endpoint
                 }
             }));
+        }
+    });
+
+    store.onDidAnyChange((newState) => {
+        if (newState.general.alwaysShowVolumeSlider) {
+            const volumeSlider = document.querySelector("#volume-slider")
+            if (!volumeSlider.classList.contains("persist-volume-slider")) {
+                volumeSlider.classList.add("persist-volume-slider")
+            }
+        } else {
+            const volumeSlider = document.querySelector("#volume-slider")
+            if (volumeSlider.classList.contains("persist-volume-slider")) {
+                volumeSlider.classList.remove("persist-volume-slider")
+            }
         }
     });
 
