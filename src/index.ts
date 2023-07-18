@@ -525,7 +525,7 @@ app.on('ready', () => {
 
   ipcMain.on('ytmView:videoStateChanged', (event, state) => {
     // ytm state mapping definitions
-    // -1 -> Unknown (Only happens when loading new songs - could be no video data/video data resetting)
+    // -1 -> Unknown (Seems tied to no buffer data, but cannot confirm)
     // 1 -> Playing
     // 2 -> Paused
     // 3 -> Buffering
