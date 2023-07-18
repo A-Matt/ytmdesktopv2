@@ -43,9 +43,13 @@ function createStyleSheet() {
             display: none;
         }
 
-        .persist-volume-slider {
+        .ytmd-persist-volume-slider {
             opacity: 1 !important;
             pointer-events: initial !important;
+        }
+        
+        .ytmd-player-bar-control.library-button {
+            margin-left: 8px;
         }
         `
     ))
@@ -121,6 +125,109 @@ function createKeyboardNavigation() {
     document.body.appendChild(keyboardNavigation);
 }
 
+function createAdditionalMiddleControls() {
+    webFrame.executeJavaScript(`
+        window.ytmdControlButtons = {};
+        
+        let libraryFeedbackDefaultToken = "";
+        let libraryFeedbackToggledToken = "";
+
+        let libraryButton = document.createElement("yt-button-shape");
+        libraryButton.classList.add("ytmd-player-bar-control");
+        libraryButton.classList.add("library-button");
+        libraryButton.set('data', {
+            focused: false,
+            iconPosition: "icon-only",
+            onTap: function() {
+                var closePopoupEvent = {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: true,
+                    detail: {
+                        actionName: 'yt-close-popups-action',
+                        args: [
+                            ['ytmusic-menu-popup-renderer']
+                        ],
+                        optionalAction: false,
+                        returnValue: []
+                    }
+                };
+                var feedbackEvent = {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: true,
+                    detail: {
+                        actionName: 'yt-service-request',
+                        args: [
+                            this,
+                            {
+                                feedbackEndpoint: {
+                                    feedbackToken: this.data.toggled ? libraryFeedbackToggledToken : libraryFeedbackDefaultToken
+                                }
+                            }
+                        ],
+                        optionalAction: false,
+                        returnValue: []
+                    }
+                };
+                this.dispatchEvent(new CustomEvent('yt-action', closePopoupEvent));
+                this.dispatchEvent(new CustomEvent('yt-action', feedbackEvent));
+                window.ytmdPlayerBar.store.dispatch({ type: "SET_FEEDBACK_TOGGLE_STATE", payload: { defaultEndpointFeedbackToken: libraryFeedbackDefaultToken, isToggled: !this.data.toggled } })
+            }.bind(libraryButton),
+            style: "mono",
+            toggled: false,
+            type: "text"
+        });
+        window.ytmdPlayerBar.querySelector("ytmusic-like-button-renderer").insertAdjacentElement("afterend", libraryButton);
+
+        window.ytmdPlayerBar.store.subscribe(() => {
+            let state = window.ytmdPlayerBar.store.getState();
+
+            // Update library button for current data
+            const currentMenu = window.ytmdPlayerBar.getMenuRenderer();
+            if (currentMenu) {
+                for (let i = 0; i < currentMenu.items.length; i++) {
+                    const item = currentMenu.items[i];
+                    if (item.toggleMenuServiceItemRenderer) {
+                        if (item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_SAVED" || item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_ADD") {
+                            libraryFeedbackDefaultToken = item.toggleMenuServiceItemRenderer.defaultServiceEndpoint.feedbackEndpoint.feedbackToken;
+                            libraryFeedbackToggledToken = item.toggleMenuServiceItemRenderer.toggledServiceEndpoint.feedbackEndpoint.feedbackToken;
+
+                            if (state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken] !== undefined && state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken] !== null) {
+                                libraryButton.set("data.toggled", state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken]);
+                            } else {
+                                libraryButton.set("data.toggled", false);
+                            }
+
+                            console.log(item.toggleMenuServiceItemRenderer.defaultIcon.iconType, state.toggleStates.feedbackToggleStates[libraryFeedbackDefaultToken], libraryButton.data.toggled);
+    
+                            if (item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_SAVED") {
+                                // Default value is saved to library (false == remove from library, true == add to library)
+                                if (libraryButton.data.toggled) {
+                                    libraryButton.set("icon", "yt-sys-icons:library_add");
+                                } else {
+                                    libraryButton.set("icon", "yt-sys-icons:library_saved");
+                                }
+                            } else if (item.toggleMenuServiceItemRenderer.defaultIcon.iconType === "LIBRARY_ADD") {
+                                // Default value is add to library (false == add to library, true == remove from library)
+                                if (libraryButton.data.toggled) {
+                                    libraryButton.set("icon", "yt-sys-icons:library_saved");
+                                } else {
+                                    libraryButton.set("icon", "yt-sys-icons:library_add");
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+        })
+
+        window.ytmdControlButtons.libraryButton = libraryButton;
+    `);
+}
+
 function hideChromecastButton() {
     webFrame.executeJavaScript(`
         window.ytmdPlayerBar.store.dispatch({ type: 'SET_CAST_AVAILABLE', payload: false });
@@ -178,6 +285,7 @@ window.addEventListener('load', async () => {
     createStyleSheet();
     createNavigationMenuArrows();
     createKeyboardNavigation();
+    createAdditionalMiddleControls();
     hideChromecastButton();
     hookPlayerApiEvents();
 
@@ -206,7 +314,7 @@ window.addEventListener('load', async () => {
 
     const alwaysShowVolumeSlider = (await store.get('general')).alwaysShowVolumeSlider;
     if (alwaysShowVolumeSlider) {
-        document.querySelector("#volume-slider").classList.add("persist-volume-slider");
+        document.querySelector("#volume-slider").classList.add("ytmd-persist-volume-slider");
     }
 
     ipcRenderer.on('remoteControl:execute', async (event, command, value) => {
