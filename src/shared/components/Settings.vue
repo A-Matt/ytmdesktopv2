@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import KeybindInput from '../../shared/components/KeybindInput.vue'
 import { StoreSchema } from '../store/schema';
 
-const currentTab = ref(3);
+const currentTab = ref(1);
 
 const store = window.ytmd.store;
 const safeStorage = window.ytmd.safeStorage;
@@ -19,6 +19,7 @@ const hideToTrayOnClose = ref<boolean>(general.hideToTrayOnClose);
 const showNotificationOnSongChange = ref<boolean>(general.showNotificationOnSongChange);
 const startOnBoot = ref<boolean>(general.startOnBoot);
 const startMinimized = ref<boolean>(general.startMinimized);
+const alwaysShowVolumeSlider = ref<boolean>(general.alwaysShowVolumeSlider);
 
 const continueWhereYouLeftOff = ref<boolean>(playback.continueWhereYouLeftOff);
 const taskbarProgress = ref<boolean>(playback.taskbarProgress);
@@ -42,6 +43,7 @@ store.onDidAnyChange(async (newState, oldState) => {
     showNotificationOnSongChange.value = newState.general.showNotificationOnSongChange;
     startOnBoot.value = newState.general.startOnBoot;
     startMinimized.value = newState.general.startMinimized;
+    alwaysShowVolumeSlider.value = newState.general.alwaysShowVolumeSlider;
 
     continueWhereYouLeftOff.value = newState.playback.continueWhereYouLeftOff;
     taskbarProgress.value = newState.playback.taskbarProgress;
@@ -66,6 +68,7 @@ async function settingsChanged() {
     store.set('general.showNotificationOnSongChange', showNotificationOnSongChange.value);
     store.set('general.startOnBoot', startOnBoot.value);
     store.set('general.startMinimized', startMinimized.value);
+    store.set("general.alwaysShowVolumeSlider", alwaysShowVolumeSlider.value);
 
     store.set('playback.continueWhereYouLeftOff', continueWhereYouLeftOff.value);
     store.set('playback.taskbarProgress', taskbarProgress.value);
@@ -123,6 +126,10 @@ function changeTab(newTab: number) {
                     <p>Start minimized</p>
                     <input v-model="startMinimized" @change="settingsChanged" class="toggle" type="checkbox" />
                 </div>-->
+                <div class="setting">
+                    <p>Always show volume slider</p>
+                    <input v-model="alwaysShowVolumeSlider" @change="settingsChanged" class="toggle" type="checkbox" />
+                </div>
             </div>
             <div v-if="currentTab === 2" class="playback-tab">
                 <div class="setting">
