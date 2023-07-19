@@ -51,6 +51,14 @@ function createStyleSheet() {
         .ytmd-player-bar-control.library-button {
             margin-left: 8px;
         }
+
+        .ytmd-player-bar-control.library-button.hidden {
+            display: none;
+        }
+
+        .ytmd-player-bar-control.sleep-timer-button.active {
+            color: #FFFFFF;
+        }
         `
     ))
     document.head.appendChild(css);
@@ -125,12 +133,14 @@ function createKeyboardNavigation() {
     document.body.appendChild(keyboardNavigation);
 }
 
-function createAdditionalMiddleControls() {
+function createAdditionalPlayerBarControls() {
     webFrame.executeJavaScript(`
         window.ytmdControlButtons = {};
         
         let libraryFeedbackDefaultToken = "";
         let libraryFeedbackToggledToken = "";
+
+        let sleepTimerTimeout = null;
 
         let libraryButton = document.createElement("yt-button-shape");
         libraryButton.classList.add("ytmd-player-bar-control");
@@ -180,12 +190,276 @@ function createAdditionalMiddleControls() {
         });
         window.ytmdPlayerBar.querySelector("ytmusic-like-button-renderer").insertAdjacentElement("afterend", libraryButton);
 
+        let rightControls = document.querySelector("ytmusic-player-bar").querySelector(".right-controls-buttons");
+        let sleepTimerButton = document.createElement("tp-yt-paper-icon-button");
+        sleepTimerButton.setAttribute("title", "Sleep timer off");
+        sleepTimerButton.classList.add("ytmusic-player-bar");
+        sleepTimerButton.classList.add("ytmd-player-bar-control");
+        sleepTimerButton.classList.add("sleep-timer-button");
+        sleepTimerButton.set("icon", "yt-sys-icons:stopwatch");
+        sleepTimerButton.onclick = () => {
+            sleepTimerButton.dispatchEvent(new CustomEvent('yt-action', {
+                bubbles: true,
+                cancelable: false,
+                composed: true,
+                detail: {
+                    actionName: 'yt-open-popup-action',
+                    args: [
+                        {
+                            openPopupAction: {
+                                popup: {
+                                    menuPopupRenderer: {
+                                        accessibilityData: {
+                                            label: "Action menu"
+                                        },
+                                        items: [
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 1
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "1 minute"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 5
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "5 minutes"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 10
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "10 minutes"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 15
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "15 minutes"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 30
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "30 minutes"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 45
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "45 minutes"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "CLOCK"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 60
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "1 hour"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            },
+                                            (sleepTimerTimeout !== null) ? {
+                                                menuServiceItemRenderer: {
+                                                    icon: {
+                                                        iconType: "DELETE"
+                                                    },
+                                                    serviceEndpoint: {
+                                                        ytmdSleepTimerServiceEndpoint: {
+                                                            time: 0
+                                                        }
+                                                    },
+                                                    text: {
+                                                        runs: [
+                                                            {
+                                                                text: "Clear sleep timer"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                            } : {}
+                                        ]
+                                    }
+                                },
+                                popupType: "DROPDOWN",
+                                ytmd: false
+                            }
+                        },
+                        sleepTimerButton
+                    ],
+                    optionalAction: false,
+                    returnValue: []
+                }
+            }));
+        };
+        rightControls.querySelector(".shuffle").insertAdjacentElement("afterend", sleepTimerButton);
+        
+        window.addEventListener("yt-action", (e) => {
+            if (e.detail.actionName === "yt-service-request") {
+                if (e.detail.args[1].ytmdSleepTimerServiceEndpoint) {
+                    if (sleepTimerTimeout !== null) {
+                        clearTimeout(sleepTimerTimeout);
+                        sleepTimerTimeout = null;
+                        if (sleepTimerButton.classList.contains("active")) {
+                            sleepTimerButton.classList.remove("active");
+                            sleepTimerButton.setAttribute("title", "Sleep timer off")
+                        }
+                    }
+
+                    if (e.detail.args[1].ytmdSleepTimerServiceEndpoint.time > 0) {
+                        if (!sleepTimerButton.classList.contains("active")) {
+                            sleepTimerButton.classList.add("active")
+                            sleepTimerButton.setAttribute("title", "Sleep timer " + e.detail.args[1].ytmdSleepTimerServiceEndpoint.time + " minutes")
+                        }
+
+                        sleepTimerTimeout = setTimeout(() => {
+                            if (window.ytmdPlayerBar.playing_) {
+                                window.ytmdPlayerBar.playerApi_.pauseVideo()
+                                sleepTimerButton.classList.remove("active");
+                                sleepTimerButton.setAttribute("title", "Sleep timer off")
+
+                                document.body.dispatchEvent(new CustomEvent('yt-action', {
+                                    bubbles: true,
+                                    cancelable: false,
+                                    composed: true,
+                                    detail: {
+                                        actionName: 'yt-open-popup-action',
+                                        args: [
+                                            {
+                                                openPopupAction: {
+                                                    popup: {
+                                                        dismissableDialogRenderer: {
+                                                            title: {
+                                                                runs: [
+                                                                    {
+                                                                        text: "Music paused"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            dialogMessages: [
+                                                                {
+                                                                    runs: [
+                                                                        {
+                                                                            text: "Sleep timer expired and your music has been paused"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ],
+                                                        }
+                                                    },
+                                                    popupType: "DIALOG",
+                                                }
+                                            },
+                                            document.querySelector("ytmusic-app")
+                                        ],
+                                        optionalAction: false,
+                                        returnValue: []
+                                    }
+                                }));
+                            }
+                        }, (e.detail.args[1].ytmdSleepTimerServiceEndpoint.time * 1000) * 60);
+                    }
+                }
+            }
+        });
+
         window.ytmdPlayerBar.store.subscribe(() => {
             let state = window.ytmdPlayerBar.store.getState();
 
             // Update library button for current data
             const currentMenu = window.ytmdPlayerBar.getMenuRenderer();
             if (currentMenu) {
+                if (libraryButton.classList.contains("hidden")) {
+                    libraryButton.classList.remove("hidden");
+                }
+
                 for (let i = 0; i < currentMenu.items.length; i++) {
                     const item = currentMenu.items[i];
                     if (item.toggleMenuServiceItemRenderer) {
@@ -219,8 +493,12 @@ function createAdditionalMiddleControls() {
                         }
                     }
                 }
+            } else {
+                if (!libraryButton.classList.contains("hidden")) {
+                    libraryButton.classList.add("hidden");
+                }
             }
-        })
+        });
 
         window.ytmdControlButtons.libraryButton = libraryButton;
     `);
@@ -283,7 +561,7 @@ window.addEventListener('load', async () => {
     createStyleSheet();
     createNavigationMenuArrows();
     createKeyboardNavigation();
-    createAdditionalMiddleControls();
+    createAdditionalPlayerBarControls();
     hideChromecastButton();
     hookPlayerApiEvents();
 
