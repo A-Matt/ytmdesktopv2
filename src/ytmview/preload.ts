@@ -381,6 +381,7 @@ function createAdditionalPlayerBarControls() {
                         }
 
                         sleepTimerTimeout = setTimeout(() => {
+                            sleepTimerTimeout = null;
                             if (window.ytmdPlayerBar.playing_) {
                                 window.ytmdPlayerBar.playerApi_.pauseVideo()
                                 sleepTimerButton.classList.remove("active");
