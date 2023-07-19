@@ -220,25 +220,6 @@ function createAdditionalPlayerBarControls() {
                                                     },
                                                     serviceEndpoint: {
                                                         ytmdSleepTimerServiceEndpoint: {
-                                                            time: 1
-                                                        }
-                                                    },
-                                                    text: {
-                                                        runs: [
-                                                            {
-                                                                text: "1 minute"
-                                                            }
-                                                        ]
-                                                    }
-                                                },
-                                            },
-                                            {
-                                                menuServiceItemRenderer: {
-                                                    icon: {
-                                                        iconType: "CLOCK"
-                                                    },
-                                                    serviceEndpoint: {
-                                                        ytmdSleepTimerServiceEndpoint: {
                                                             time: 5
                                                         }
                                                     },
