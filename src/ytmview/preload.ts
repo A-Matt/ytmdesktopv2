@@ -56,6 +56,14 @@ function createStyleSheet() {
             display: none;
         }
 
+        .ytmd-player-bar-control.playlist-button {
+            margin-left: 8px;
+        }
+
+        .ytmd-player-bar-control.playlist-button.hidden {
+            display: none;
+        }
+
         .ytmd-player-bar-control.sleep-timer-button.active {
             color: #FFFFFF;
         }
@@ -137,6 +145,8 @@ function createAdditionalPlayerBarControls() {
     webFrame.executeJavaScript(`
         window.ytmdControlButtons = {};
         
+        let currentVideoId = "";
+
         let libraryFeedbackDefaultToken = "";
         let libraryFeedbackToggledToken = "";
 
@@ -189,6 +199,90 @@ function createAdditionalPlayerBarControls() {
             type: "text"
         });
         window.ytmdPlayerBar.querySelector("ytmusic-like-button-renderer").insertAdjacentElement("afterend", libraryButton);
+
+        let playlistButton = document.createElement("yt-button-shape");
+        playlistButton.classList.add("ytmd-player-bar-control");
+        playlistButton.classList.add("playlist-button");
+        playlistButton.set('icon', "yt-sys-icons:playlist_add");
+        playlistButton.set('data', {
+            focused: false,
+            iconPosition: "icon-only",
+            onTap: function() {
+                var closePopoupEvent = {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: true,
+                    detail: {
+                        actionName: 'yt-close-popups-action',
+                        args: [
+                            ['ytmusic-menu-popup-renderer']
+                        ],
+                        optionalAction: false,
+                        returnValue: []
+                    }
+                };
+                var returnValue = []
+                var serviceRequestEvent = {
+                    bubbles: true,
+                    cancelable: false,
+                    composed: true,
+                    detail: {
+                        actionName: 'yt-service-request',
+                        args: [
+                            this,
+                            {
+                                addToPlaylistEndpoint: {
+                                    videoId: currentVideoId
+                                }
+                            }
+                        ],
+                        optionalAction: false,
+                        returnValue
+                    }
+                };
+                this.dispatchEvent(new CustomEvent('yt-action', closePopoupEvent));
+                this.dispatchEvent(new CustomEvent('yt-action', serviceRequestEvent));
+                returnValue[0].ajaxPromise.then((response) => {
+                    console.log("response done", this);
+                    var addToPlaylistEvent = {
+                        bubbles: true,
+                        cancelable: false,
+                        composed: true,
+                        detail: {
+                            actionName: 'yt-open-popup-action',
+                            args: [
+                                {
+                                    openPopupAction: {
+                                        popup: {
+                                            addToPlaylistRenderer: response.data.contents[0].addToPlaylistRenderer
+                                        },
+                                        popupType: "DIALOG"
+                                    }
+                                },
+                                this
+                            ],
+                            optionalAction: false,
+                            returnValue: []
+                        }
+                    };
+                    this.dispatchEvent(new CustomEvent('yt-action', addToPlaylistEvent));
+                    this.dispatchEvent(new CustomEvent('yt-action', closePopoupEvent));
+                }, () => {
+                    // service request errored
+                    console.log("request error");
+                }, this);
+            }.bind(playlistButton),
+            style: "mono",
+            toggled: false,
+            type: "text"
+        });
+        libraryButton.insertAdjacentElement("afterend", playlistButton);
+
+        window.ytmdPlayerBar.playerApi_.addEventListener('onVideoDataChange', (event) => {
+            if (event.type === 'dataloaded' && event.playertype === 1) {
+                currentVideoId = window.ytmdPlayerBar.playerApi_.getPlayerResponse().videoDetails.videoId;
+            }
+        });
 
         let rightControls = document.querySelector("ytmusic-player-bar").querySelector(".right-controls-buttons");
         let sleepTimerButton = document.createElement("tp-yt-paper-icon-button");
@@ -349,8 +443,7 @@ function createAdditionalPlayerBarControls() {
                                         ]
                                     }
                                 },
-                                popupType: "DROPDOWN",
-                                ytmd: false
+                                popupType: "DROPDOWN"
                             }
                         },
                         sleepTimerButton
@@ -382,10 +475,11 @@ function createAdditionalPlayerBarControls() {
 
                         sleepTimerTimeout = setTimeout(() => {
                             sleepTimerTimeout = null;
+                            sleepTimerButton.classList.remove("active");
+                            sleepTimerButton.setAttribute("title", "Sleep timer off");
+
                             if (window.ytmdPlayerBar.playing_) {
                                 window.ytmdPlayerBar.playerApi_.pauseVideo()
-                                sleepTimerButton.classList.remove("active");
-                                sleepTimerButton.setAttribute("title", "Sleep timer off")
 
                                 document.body.dispatchEvent(new CustomEvent('yt-action', {
                                     bubbles: true,
@@ -441,6 +535,9 @@ function createAdditionalPlayerBarControls() {
                 if (libraryButton.classList.contains("hidden")) {
                     libraryButton.classList.remove("hidden");
                 }
+                if (playlistButton.classList.contains("hidden")) {
+                    playlistButton.classList.remove("hidden");
+                }
 
                 for (let i = 0; i < currentMenu.items.length; i++) {
                     const item = currentMenu.items[i];
@@ -478,6 +575,9 @@ function createAdditionalPlayerBarControls() {
             } else {
                 if (!libraryButton.classList.contains("hidden")) {
                     libraryButton.classList.add("hidden");
+                }
+                if (!playlistButton.classList.contains("hidden")) {
+                    playlistButton.classList.add("hidden");
                 }
             }
         });
