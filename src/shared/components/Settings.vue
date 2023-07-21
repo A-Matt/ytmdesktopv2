@@ -289,7 +289,7 @@ function changeTab(newTab: number) {
     outline: none;
     border: none;
     cursor: pointer;
-    background-color: #707070;
+    background-color: #212121;
     transition: background-color ease 0.3s;
 }
 
